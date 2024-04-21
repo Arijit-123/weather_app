@@ -5,10 +5,29 @@ import { Link } from 'react-router-dom';
 import Weatherapp from './Weatherapp';
 import { newweather } from '../utils/Common';
 import { LOCATION_API_new } from '../utils/Constants';
+import { useParams } from 'react-router-dom';
 function Table() {
 
 const [filres,setFilres]=useState<string>("");
 const [suggestions,setSuggestions]=useState<Location[]>();
+const[selecteditem,setSelecteditem]=useState(-1);
+
+const {locid}=useParams();
+let lat="";
+let lon="";
+  console.log("locid", locid);
+if(locid?.length== 15){
+    lat=locid?.substring(0, 8);
+   lon=locid?.substring(8);
+   console.log("lat",lat);
+   console.log("lon",lon);
+}
+else{
+   lat=(locid ?? "")?.substring(0, 8);
+   lon=(locid ?? "")?.substring(8);
+}
+
+
 
   interface Location {
     admin1_code: string;
@@ -107,14 +126,43 @@ const setFilresFromDiv = (e: React.MouseEvent<HTMLDivElement>) => {
   }
 };
 
+function handlekeyup(e:React.KeyboardEvent<HTMLInputElement>){
+console.log("events",e.key);
+
+console.log("newevent",e.currentTarget.value)
+if(e.key==="ArrowUp" && selecteditem>0){
+setSelecteditem((prev)=>prev-1);
+}
+else if(e.key==="ArrowDown" && suggestions && selecteditem < (suggestions.length)-1){
+setSelecteditem((prev)=>prev+1);
+}
+else if(e.key==="Enter" && selecteditem >=0){
+ 
+  if (suggestions && suggestions[selecteditem]) {
+    setFilres(suggestions[selecteditem].ascii_name);
+    console.log("filresmenu",filres);
+    setSuggestions([]);
+    const fildatanew=location?.filter((item)=>item?.ascii_name?.toLowerCase().includes(filres?.toLowerCase()));
+    console.log("fildatanew",fildatanew);
+         setNewdata(fildatanew);
+
+
+}else{
+  setNewdata(location);
+}
+  
+}
+console.log("setitem",suggestions && suggestions[selecteditem]);
+}
+
 
   return (
     <div className='w-11/12' onClick={()=>setSuggestions([])}>
       <div>
-      <input className='border border-black w-11/12' value={filres} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>handleinputandauto(e,1)}></input>
+      <input className='border border-black w-11/12' value={filres} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>handleinputandauto(e,1)}  onKeyUp={handlekeyup}></input>
       <button onClick={()=>{ const fildata=location?.filter((item)=>item?.ascii_name?.toLowerCase().includes(filres?.toLowerCase()));
          setNewdata(fildata);
-      console.log("filteres vi",newdata);
+      console.log("filbutton",newdata);
         
 
       }}
@@ -128,7 +176,7 @@ const setFilresFromDiv = (e: React.MouseEvent<HTMLDivElement>) => {
 <>
 
 <li    
-            value={filres} onClick={(e)=>setFilres(e.currentTarget.textContent || '')} className='py-2 shadow-sm hover:bg-gray-100 '>
+            value={filres} key={index} onClick={(e)=>setFilres(e.currentTarget.textContent || '')} className={selecteditem==index?'py-2 shadow-sm bg-gray-100':'py-2 shadow-sm' }>
   {item.ascii_name}
 </li>
 

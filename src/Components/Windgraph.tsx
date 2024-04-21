@@ -22,9 +22,10 @@ ChartJS.register(
   Legend
 );
 interface Props {
-  udates: string[];
-  max_temp:number[]; // Specify the type of udates
-  min_temp:number[];
+    udates:string[];
+ windspeed: number[];
+ windgust:number[];
+ winddegree:number[];
 }
 export const options = {
   responsive: true,
@@ -38,33 +39,38 @@ export const options = {
     },
   },
 };
-export function Graphweather({udates,max_temp,min_temp}:Props) {
+export function Windgraph({udates,windspeed,windgust,winddegree}:Props) {
 const labels = udates;
 
-console.log("mintemp",min_temp);
 
 
-console.log("maxtemp",max_temp);
+
+
  const data = {
   labels,
   datasets: [
     {
-      label: 'Max Temp',
-      data: max_temp,
+      label: 'Wind Speed',
+      data: windspeed,
       borderColor: 'rgb(255, 99, 132)',
       backgroundColor: 'rgba(255, 99, 132, 0.5)',
     },
     {
-      label: 'Min Temp',
-      data: min_temp,
+      label: 'Wind Gust',
+      data: windgust,
       borderColor: 'rgb(53, 162, 235)',
       backgroundColor: 'rgba(53, 162, 235, 0.5)',
     },
-   
+    {
+        label: 'Degree',
+        data: winddegree,
+        borderColor: 'green',
+        backgroundColor: 'green',
+      },
   ],
 };
 
 
-console.log("udates",udates);
+
   return <Line options={options} data={data} />;
 }
