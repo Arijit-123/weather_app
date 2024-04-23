@@ -8,13 +8,22 @@ const useWeatherdata = (lat:string, lon:string) => {
   }, [])
 
   async function fetchweatherdata(){
+    try{
 const data= await fetch(WEATHER_API_NEW+"lat="+lat+"&lon="+lon+"&appid="+WEATHER_API_KEY);
 
 const data_json=await data.json();
 setInfo(data_json);
+    }
+    catch(error){
+      return(
+        <>
+        Oops something went wrong
+        </>
+      )
+    }
   }
 
-  console.log("weather data", info);
+
   return info;
 }
 

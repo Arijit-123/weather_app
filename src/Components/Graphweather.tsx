@@ -34,17 +34,17 @@ export const options = {
     },
     title: {
       display: true,
-      text: 'Chart.js Line Chart',
+      text: '',
     },
   },
 };
 export function Graphweather({udates,max_temp,min_temp}:Props) {
 const labels = udates;
 
-console.log("mintemp",min_temp);
 
 
-console.log("maxtemp",max_temp);
+
+
  const data = {
   labels,
   datasets: [
@@ -65,6 +65,6 @@ console.log("maxtemp",max_temp);
 };
 
 
-console.log("udates",udates);
+
   return <Line options={options} data={data} />;
 }

@@ -1,12 +1,19 @@
 
 import React,{useEffect, useState} from 'react';
-import { LOCATION_API } from '../utils/Constants';
+import { LOCATION_API, MOD_LOCATION_API } from '../utils/Constants';
 import { Link } from 'react-router-dom';
 import Weatherapp from './Weatherapp';
 import { newweather } from '../utils/Common';
 import { LOCATION_API_new } from '../utils/Constants';
 import { useParams } from 'react-router-dom';
+import useWeatherdata from '../Customhooks/useWeatherdata';
+import { useDispatch } from 'react-redux';
+import { addInfo } from './weatherdataSlice';
+import Recentsuggestion from './Recentsuggestion';
+
 function Table() {
+
+  const dispatch=useDispatch();
 
 const [filres,setFilres]=useState<string>("");
 const [suggestions,setSuggestions]=useState<Location[]>();
@@ -15,12 +22,11 @@ const[selecteditem,setSelecteditem]=useState(-1);
 const {locid}=useParams();
 let lat="";
 let lon="";
-  console.log("locid", locid);
+ 
 if(locid?.length== 15){
     lat=locid?.substring(0, 8);
    lon=locid?.substring(8);
-   console.log("lat",lat);
-   console.log("lon",lon);
+   
 }
 else{
    lat=(locid ?? "")?.substring(0, 8);
@@ -66,27 +72,31 @@ useEffect(() => {
 
 
 async function locationdata(){
-// const data=await fetch(LOCATION_API+`${datanum}&timezone=Asia%2FKolkata&refine=cou_name_en%3A%22India%22`);
-const data=await fetch(`https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/geonames-all-cities-with-a-population-1000/records?limit=${datanum}&timezone=Asia%2FKolkata&refine=cou_name_en%3A%22India%22`);
+  try{
+
+const data=await fetch(`${MOD_LOCATION_API}${datanum}&timezone=Asia%2FKolkata&refine=cou_name_en%3A%22India%22`);
 const newdataone=await data.json();
-console.log("newdata", newdataone.results);
-// setLocation(newdata.results);
+
+
 
 setLocation(newdataone.results);
-
+  }
+  catch(error){
+return (
+  <>
+  <div> Oops Something went wrong</div>
+  </>
+)
+  }
 }
 
 useEffect(()=>{setNewdata(location);},[location])
 
-console.log("location",location);
-console.log("newonedata",newdata);
-console.log("newres",filres);
+
 
 const handleinfiniteScroll=async()=>{
 
-  console.log("scrollheight"+ document.documentElement.scrollHeight);
-  console.log("innerheight"+window.innerHeight);
-  console.log("scrolltop"+document.documentElement.scrollTop);
+  
   try{
     if((window.innerHeight+  document.documentElement.scrollTop) +1 >=  document.documentElement.scrollHeight){
 
@@ -111,13 +121,14 @@ return()=>window.removeEventListener("scroll", handleinfiniteScroll);
 
 function handleinputandauto(e: React.ChangeEvent<HTMLInputElement>,status:number){
   setFilres(e.target.value);
-  // let OPTION=location.map((item)=>{return {name:item?.ascii_name}});
+  
+
   if(status==1){
   let newfildata=location?.filter((item)=>item?.ascii_name?.toLowerCase().includes(filres?.toLowerCase()));
 setSuggestions(newfildata);
   }
 }
-console.log("filtered suggestions", suggestions);
+
 
 const setFilresFromDiv = (e: React.MouseEvent<HTMLDivElement>) => {
   const newValue = e.currentTarget.getAttribute('data-value');
@@ -127,9 +138,7 @@ const setFilresFromDiv = (e: React.MouseEvent<HTMLDivElement>) => {
 };
 
 function handlekeyup(e:React.KeyboardEvent<HTMLInputElement>){
-console.log("events",e.key);
 
-console.log("newevent",e.currentTarget.value)
 if(e.key==="ArrowUp" && selecteditem>0){
 setSelecteditem((prev)=>prev-1);
 }
@@ -140,10 +149,11 @@ else if(e.key==="Enter" && selecteditem >=0){
  
   if (suggestions && suggestions[selecteditem]) {
     setFilres(suggestions[selecteditem].ascii_name);
-    console.log("filresmenu",filres);
+  
+   
     setSuggestions([]);
     const fildatanew=location?.filter((item)=>item?.ascii_name?.toLowerCase().includes(filres?.toLowerCase()));
-    console.log("fildatanew",fildatanew);
+   
          setNewdata(fildatanew);
 
 
@@ -152,24 +162,41 @@ else if(e.key==="Enter" && selecteditem >=0){
 }
   
 }
-console.log("setitem",suggestions && suggestions[selecteditem]);
+
 }
 
 
+
+  const weatherData = useWeatherdata(String(lat), String(lon));
+
+  
+  
+function addrecentinfo(item:Location){
+
+dispatch(addInfo(item));
+  
+}
+
+
+
+
+
   return (
-    <div className='w-11/12' onClick={()=>setSuggestions([])}>
+    <div className='w-8/12 ' onClick={()=>setSuggestions([])}>
       <div>
-      <input className='border border-black w-11/12' value={filres} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>handleinputandauto(e,1)}  onKeyUp={handlekeyup}></input>
+
+        <div className='flex'>
+      <input className='border border-black w-11/12  md:w-10/12 md:p-4 ' value={filres} onChange={(e: React.ChangeEvent<HTMLInputElement>)=>handleinputandauto(e,1)}  onKeyUp={handlekeyup} ></input>
       <button onClick={()=>{ const fildata=location?.filter((item)=>item?.ascii_name?.toLowerCase().includes(filres?.toLowerCase()));
          setNewdata(fildata);
-      console.log("filbutton",newdata);
+
         
 
       }}
-      className='bg bg-green-500'
+      className='bg bg-green-500 p-4 w-32'
       >Submit</button>
-
-<div className='fixed bg-white w-11/12'>
+</div>
+<div className='fixed bg-white w-7/12'>
   <ul  className='w-11/12' >
     {
       suggestions?.map((item,index)=>
@@ -185,27 +212,36 @@ console.log("setitem",suggestions && suggestions[selecteditem]);
   </ul>
 </div>
 </div>
-<div className='flex justify-center items-center'>
-      <table >
-      <tr>
-    <th>City</th>
-    <th>Country</th>
-    <th>TimeZone</th>
-    <th>Lattitude</th>
-    <th>Longitude</th>
+
+<Recentsuggestion/>
+<div className='flex justify-center items-center mt-16'>
+      <table  >
+      <tr className='bg bg-blue-800 h-32'>
+    <th className="text text-lg md:text-3xl text-white">City</th>
+    <th className="text text-lg md:text-3xl text-white">Country</th>
+    <th className="text text-lg md:text-3xl text-white">TimeZone</th>
+    <th className="text text-lg md:text-3xl text-white">Lattitude</th>
+    <th className="text text-lg md:text-3xl text-white">Longitude</th>
+   
   </tr>
-{newdata?.map((item:Location)=>(
+{newdata?.map((item:Location)=>{
+ 
+return(
+  
   <>
+  {   }
   <tr>
-   <td className='border border-black  h-40 w-40 text text-3xl' onClick={()=>setWedetail({lat:item.coordinates.lat, lon:item.coordinates.lon})}><Link to=
-    {"/weather/"+ item.coordinates.lat+item.coordinates.lon}state={{lat:item.coordinates.lat, lon:item.coordinates.lon }}  target="_blank" rel="noopener noreferrer"> {item.ascii_name}</Link></td>
-    <td className='border border-black  h-40 w-40 text-3xl'>{item.cou_name_en}</td>
-    <td className='border border-black flex justify-center items-center  h-40 w-40 text-3xl'>{item.timezone}</td>
-    <td className='border border-black  h-40 w-40 text-3xl'>{item.coordinates.lat}</td>
-    <td className='border border-black  h-40 w-40 text-3xl'>{item.coordinates.lon}</td>
+   <td className='border border-black  w-14  h-40 md:w-40 md:text md:text-3xl text-center' onClick={()=>addrecentinfo(item)}><Link to=
+    {"/weather/"+ item.coordinates.lat+item.coordinates.lon}  target="_blank" rel="noopener noreferrer"> {item.ascii_name}</Link></td>
+    <td className='border border-black  w-14  h-40 md:w-40 md:text-3xl'>{item.cou_name_en}</td>
+    <td className='border border-black   w-14 h-40  md:w-40 md:flex md:justify-center md:items-center    md:text-3xl'>{item.timezone}</td>
+    <td className='border border-black h-40 w-14  md:w-40 md:text-3xl'>{item.coordinates.lat}</td>
+    <td className='border border-black h-40 w-14 md:w-40 md:text-3xl'>{item.coordinates.lon}</td>
+   
   </tr>
   </>
-  ))
+)
+})
 }
  
       </table>
